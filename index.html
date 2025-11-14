@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>In-Chesst - Chess Game</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>In-Chesst</h1>
+        <div class="game-info">
+            <div class="turn-indicator">
+                <span id="current-turn">White</span>'s Turn
+            </div>
+            <div class="theme-selector">
+                <label for="theme">Theme:</label>
+                <select id="theme">
+                    <option value="chess">Classic</option>
+                    <option value="chess_green">Green</option>
+                    <option value="chess_pink">Pink</option>
+                </select>
+            </div>
+        </div>
+        <div id="chess-board"></div>
+        <div class="controls">
+            <button id="reset-btn">Reset Game</button>
+            <button id="undo-btn">Undo Move</button>
+        </div>
+        <div class="status">
+            <p id="status-message">Game started. White moves first.</p>
+        </div>
+    </div>
+    <script src="chess.js"></script>
+</body>
+</html>
