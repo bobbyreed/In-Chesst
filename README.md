@@ -1,6 +1,8 @@
 # In-Chesst
+A fully functional chess game built with vanilla JavaScript, HTML5, and CSS3. Features complete chess rule implementation, multiple visual themes, and prepared infrastructure for advanced cell corner manipulation. 
 
-A fully functional chess game built with vanilla JavaScript, HTML5, and CSS3. Features complete chess rule implementation, multiple visual themes, and prepared infrastructure for advanced cell corner manipulation.
+## But, Why?
+So, I got this email from Claude, right? It was like here is $250 in credit to use the browser based Claude code, *but* you only have 4 days to use it. So, I'm building random things. This is one of them. 
 
 ## Features
 
