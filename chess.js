@@ -54,6 +54,7 @@ class ChessGame {
         this.gameMode = 'human'; // 'human' or 'computer'
         this.aiStrategy = new RandomAI(this); // Extensible - can swap for different strategies
         this.computerColor = 'black'; // Computer always plays black
+        this.currentView = 'normal'; // Track current view mode
 
         this.initializeUI();
         this.attachEventListeners();
@@ -106,6 +107,7 @@ class ChessGame {
         document.getElementById('undo-btn').addEventListener('click', () => this.undoMove());
         document.getElementById('theme').addEventListener('change', (e) => this.changeTheme(e.target.value));
         document.getElementById('game-mode').addEventListener('change', (e) => this.changeGameMode(e.target.value));
+        document.getElementById('view').addEventListener('change', (e) => this.changeView(e.target.value));
     }
 
     // Render the chess board
@@ -146,6 +148,11 @@ class ChessGame {
                 cell.addEventListener('click', () => this.handleCellClick(row, col));
                 this.boardElement.appendChild(cell);
             }
+        }
+
+        // Reapply current view after rendering
+        if (this.currentView && this.currentView !== 'normal') {
+            this.changeView(this.currentView);
         }
     }
 
@@ -611,6 +618,93 @@ class ChessGame {
         // Currently, it would require CSS transforms or absolute positioning
         // which we'll implement when needed
         console.log(`Cell (${row}, ${col}) corners updated`, corners);
+    }
+
+    // Change view mode
+    changeView(view) {
+        this.currentView = view;
+
+        // Reset all cell transforms first
+        this.applyNormalView();
+
+        // Apply the selected view
+        switch(view) {
+            case 'perspective':
+                this.applyPerspectiveView();
+                break;
+            case 'wave':
+                this.applyWaveView();
+                break;
+            case 'normal':
+            default:
+                // Already reset above
+                break;
+        }
+
+        this.updateStatus(`View changed to: ${view}`);
+    }
+
+    // Normal View - Reset all transformations
+    applyNormalView() {
+        const cells = this.boardElement.children;
+        this.boardElement.style.transform = '';
+        this.boardElement.style.transformStyle = '';
+        this.boardElement.style.perspective = '';
+
+        for (let i = 0; i < cells.length; i++) {
+            cells[i].style.transform = '';
+        }
+    }
+
+    // Perspective 3D View - Apply 3D perspective transformation
+    applyPerspectiveView() {
+        const cells = this.boardElement.children;
+
+        // Apply perspective to the board container
+        this.boardElement.style.transformStyle = 'preserve-3d';
+        this.boardElement.style.perspective = '1000px';
+        this.boardElement.style.transform = 'rotateX(25deg) rotateZ(-5deg)';
+
+        // Add subtle depth to each cell based on position
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const cellIndex = row * 8 + col;
+                const cell = cells[cellIndex];
+
+                // Create depth effect - cells further back are slightly raised
+                const depth = (7 - row) * 2;
+                cell.style.transform = `translateZ(${depth}px)`;
+                cell.style.transformStyle = 'preserve-3d';
+            }
+        }
+    }
+
+    // Wave Effect View - Apply wave-like distortion
+    applyWaveView() {
+        const cells = this.boardElement.children;
+
+        this.boardElement.style.transformStyle = 'preserve-3d';
+        this.boardElement.style.perspective = '1200px';
+
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const cellIndex = row * 8 + col;
+                const cell = cells[cellIndex];
+
+                // Calculate wave parameters
+                const waveOffset = Math.sin((col + row) * Math.PI / 4) * 15;
+                const rotateX = Math.sin(col * Math.PI / 8) * 5;
+                const rotateY = Math.cos(row * Math.PI / 8) * 5;
+
+                // Apply wave transformation
+                cell.style.transform = `
+                    translateZ(${waveOffset}px)
+                    rotateX(${rotateX}deg)
+                    rotateY(${rotateY}deg)
+                `;
+                cell.style.transformStyle = 'preserve-3d';
+            }
+        }
     }
 }
 

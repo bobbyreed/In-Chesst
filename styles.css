@@ -53,6 +53,8 @@ h1 {
     text-transform: uppercase;
 }
 
+.view-selector select,
+.game-mode-selector select,
 .theme-selector select {
     padding: 8px 12px;
     border: 2px solid #667eea;
@@ -60,6 +62,13 @@ h1 {
     font-size: 1em;
     cursor: pointer;
     background: white;
+}
+
+.view-selector label,
+.game-mode-selector label,
+.theme-selector label {
+    font-weight: 600;
+    color: #555;
 }
 
 #chess-board {
@@ -212,6 +221,7 @@ button {
         padding: 10px;
     }
 
+    .view-selector,
     .game-mode-selector,
     .theme-selector {
         display: flex;
@@ -220,12 +230,14 @@ button {
         width: 100%;
     }
 
+    .view-selector label,
     .game-mode-selector label,
     .theme-selector label {
         font-size: 1em;
         margin-right: 10px;
     }
 
+    .view-selector select,
     .game-mode-selector select,
     .theme-selector select {
         flex: 1;
@@ -302,6 +314,7 @@ button {
         margin-bottom: 25px;
     }
 
+    .view-selector,
     .game-mode-selector,
     .theme-selector {
         display: flex;
