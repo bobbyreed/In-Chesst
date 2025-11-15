@@ -712,7 +712,7 @@ class ChessGame {
         }
     }
 
-    // Wave Effect View - Apply wave-like distortion
+    // Wave Effect View - Apply wave-like distortion with stretching
     applyWaveView() {
         const cells = this.boardElement.children;
 
@@ -724,23 +724,28 @@ class ChessGame {
                 const cellIndex = row * 8 + col;
                 const cell = cells[cellIndex];
 
-                // Calculate wave parameters
-                const waveOffset = Math.sin((col + row) * Math.PI / 4) * 15;
-                const rotateX = Math.sin(col * Math.PI / 8) * 5;
-                const rotateY = Math.cos(row * Math.PI / 8) * 5;
+                // Calculate wave parameters for stretching
+                const waveHeight = Math.sin((col + row) * Math.PI / 4) * 20;
+                const scaleX = 1 + Math.sin(col * Math.PI / 8) * 0.15;
+                const scaleY = 1 + Math.cos(row * Math.PI / 8) * 0.15;
+                const skewX = Math.sin(row * Math.PI / 6) * 3;
+                const skewY = Math.cos(col * Math.PI / 6) * 3;
 
-                // Apply wave transformation
+                // Apply wave transformation with stretching and skewing
                 cell.style.transform = `
-                    translateZ(${waveOffset}px)
-                    rotateX(${rotateX}deg)
-                    rotateY(${rotateY}deg)
+                    translateZ(${waveHeight}px)
+                    scaleX(${scaleX})
+                    scaleY(${scaleY})
+                    skewX(${skewX}deg)
+                    skewY(${skewY}deg)
                 `;
                 cell.style.transformStyle = 'preserve-3d';
+                cell.style.transformOrigin = 'center center';
             }
         }
     }
 
-    // Dramatic Wave Effect View - Apply extreme wave-like distortion
+    // Dramatic Wave Effect View - Apply extreme wave-like distortion with stretching
     applyDramaticWaveView() {
         const cells = this.boardElement.children;
 
@@ -753,24 +758,29 @@ class ChessGame {
                 const cell = cells[cellIndex];
 
                 // Calculate dramatic wave parameters with much higher multipliers
-                const waveOffset = Math.sin((col + row) * Math.PI / 4) * 60;
-                const rotateX = Math.sin(col * Math.PI / 8) * 25;
-                const rotateY = Math.cos(row * Math.PI / 8) * 25;
-                const scale = 1 + Math.sin((col + row) * Math.PI / 6) * 0.2;
+                const waveHeight = Math.sin((col + row) * Math.PI / 4) * 80;
+                const scaleX = 1 + Math.sin(col * Math.PI / 6) * 0.4;
+                const scaleY = 1 + Math.cos(row * Math.PI / 6) * 0.4;
+                const skewX = Math.sin(row * Math.PI / 5) * 8;
+                const skewY = Math.cos(col * Math.PI / 5) * 8;
+                const uniformScale = 1 + Math.sin((col + row) * Math.PI / 6) * 0.2;
 
-                // Apply dramatic wave transformation
+                // Apply dramatic wave transformation with extreme stretching
                 cell.style.transform = `
-                    translateZ(${waveOffset}px)
-                    rotateX(${rotateX}deg)
-                    rotateY(${rotateY}deg)
-                    scale(${scale})
+                    translateZ(${waveHeight}px)
+                    scale(${uniformScale})
+                    scaleX(${scaleX})
+                    scaleY(${scaleY})
+                    skewX(${skewX}deg)
+                    skewY(${skewY}deg)
                 `;
                 cell.style.transformStyle = 'preserve-3d';
+                cell.style.transformOrigin = 'center center';
             }
         }
     }
 
-    // Multiple Waves Effect View - Apply multiple overlapping wave patterns
+    // Multiple Waves Effect View - Apply multiple overlapping wave patterns with stretching
     applyMultiWaveView() {
         const cells = this.boardElement.children;
 
@@ -782,27 +792,37 @@ class ChessGame {
                 const cellIndex = row * 8 + col;
                 const cell = cells[cellIndex];
 
-                // Create multiple wave patterns
-                const wave1 = Math.sin((col + row) * Math.PI / 4) * 30;
-                const wave2 = Math.sin((col - row) * Math.PI / 3) * 25;
-                const wave3 = Math.cos(col * Math.PI / 2) * 20;
+                // Create multiple wave patterns for height
+                const wave1 = Math.sin((col + row) * Math.PI / 4) * 35;
+                const wave2 = Math.sin((col - row) * Math.PI / 3) * 30;
+                const wave3 = Math.cos(col * Math.PI / 2) * 25;
 
-                // Combine waves for complex motion
-                const waveOffset = wave1 + wave2 + wave3;
+                // Combine waves for complex depth
+                const waveHeight = wave1 + wave2 + wave3;
 
-                // Multiple rotation axes
-                const rotateX = Math.sin(col * Math.PI / 6) * 15 + Math.cos(row * Math.PI / 8) * 10;
-                const rotateY = Math.cos(row * Math.PI / 6) * 15 + Math.sin(col * Math.PI / 8) * 10;
-                const rotateZ = Math.sin((col + row) * Math.PI / 8) * 5;
+                // Multiple stretching patterns
+                const scaleX1 = 1 + Math.sin(col * Math.PI / 6) * 0.25;
+                const scaleX2 = 1 + Math.cos(row * Math.PI / 8) * 0.15;
+                const scaleY1 = 1 + Math.cos(row * Math.PI / 6) * 0.25;
+                const scaleY2 = 1 + Math.sin(col * Math.PI / 8) * 0.15;
 
-                // Apply multiple wave transformation
+                const finalScaleX = scaleX1 * scaleX2;
+                const finalScaleY = scaleY1 * scaleY2;
+
+                // Complex skewing patterns
+                const skewX = Math.sin((col + row) * Math.PI / 7) * 6 + Math.cos(col * Math.PI / 5) * 4;
+                const skewY = Math.cos((col - row) * Math.PI / 7) * 6 + Math.sin(row * Math.PI / 5) * 4;
+
+                // Apply multiple wave transformation with complex stretching
                 cell.style.transform = `
-                    translateZ(${waveOffset}px)
-                    rotateX(${rotateX}deg)
-                    rotateY(${rotateY}deg)
-                    rotateZ(${rotateZ}deg)
+                    translateZ(${waveHeight}px)
+                    scaleX(${finalScaleX})
+                    scaleY(${finalScaleY})
+                    skewX(${skewX}deg)
+                    skewY(${skewY}deg)
                 `;
                 cell.style.transformStyle = 'preserve-3d';
+                cell.style.transformOrigin = 'center center';
             }
         }
     }

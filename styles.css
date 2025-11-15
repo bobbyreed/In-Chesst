@@ -93,6 +93,9 @@ h1 {
     cursor: pointer;
     transition: all 0.2s ease;
     user-select: none;
+    /* Ensure cells overlap slightly to prevent gaps during distortion */
+    margin: -0.5px;
+    z-index: 1;
 }
 
 .cell.light {
