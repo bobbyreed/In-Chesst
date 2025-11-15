@@ -108,6 +108,14 @@ class ChessGame {
         document.getElementById('theme').addEventListener('change', (e) => this.changeTheme(e.target.value));
         document.getElementById('game-mode').addEventListener('change', (e) => this.changeGameMode(e.target.value));
         document.getElementById('view').addEventListener('change', (e) => this.changeView(e.target.value));
+
+        // Keyboard event listener for fullscreen
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'f' || e.key === 'F') {
+                e.preventDefault();
+                this.toggleFullscreen();
+            }
+        });
     }
 
     // Render the chess board
@@ -581,6 +589,25 @@ class ChessGame {
         }
     }
 
+    // Toggle fullscreen mode
+    toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            // Enter fullscreen
+            document.documentElement.requestFullscreen().then(() => {
+                this.updateStatus('Entered fullscreen mode. Press F to exit.');
+            }).catch((err) => {
+                this.updateStatus(`Error entering fullscreen: ${err.message}`);
+            });
+        } else {
+            // Exit fullscreen
+            document.exitFullscreen().then(() => {
+                this.updateStatus('Exited fullscreen mode.');
+            }).catch((err) => {
+                this.updateStatus(`Error exiting fullscreen: ${err.message}`);
+            });
+        }
+    }
+
     // Update status message
     updateStatus(message) {
         this.statusElement.textContent = message;
@@ -634,6 +661,12 @@ class ChessGame {
                 break;
             case 'wave':
                 this.applyWaveView();
+                break;
+            case 'dramatic-wave':
+                this.applyDramaticWaveView();
+                break;
+            case 'multi-wave':
+                this.applyMultiWaveView();
                 break;
             case 'normal':
             default:
@@ -701,6 +734,73 @@ class ChessGame {
                     translateZ(${waveOffset}px)
                     rotateX(${rotateX}deg)
                     rotateY(${rotateY}deg)
+                `;
+                cell.style.transformStyle = 'preserve-3d';
+            }
+        }
+    }
+
+    // Dramatic Wave Effect View - Apply extreme wave-like distortion
+    applyDramaticWaveView() {
+        const cells = this.boardElement.children;
+
+        this.boardElement.style.transformStyle = 'preserve-3d';
+        this.boardElement.style.perspective = '800px';
+
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const cellIndex = row * 8 + col;
+                const cell = cells[cellIndex];
+
+                // Calculate dramatic wave parameters with much higher multipliers
+                const waveOffset = Math.sin((col + row) * Math.PI / 4) * 60;
+                const rotateX = Math.sin(col * Math.PI / 8) * 25;
+                const rotateY = Math.cos(row * Math.PI / 8) * 25;
+                const scale = 1 + Math.sin((col + row) * Math.PI / 6) * 0.2;
+
+                // Apply dramatic wave transformation
+                cell.style.transform = `
+                    translateZ(${waveOffset}px)
+                    rotateX(${rotateX}deg)
+                    rotateY(${rotateY}deg)
+                    scale(${scale})
+                `;
+                cell.style.transformStyle = 'preserve-3d';
+            }
+        }
+    }
+
+    // Multiple Waves Effect View - Apply multiple overlapping wave patterns
+    applyMultiWaveView() {
+        const cells = this.boardElement.children;
+
+        this.boardElement.style.transformStyle = 'preserve-3d';
+        this.boardElement.style.perspective = '1000px';
+
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const cellIndex = row * 8 + col;
+                const cell = cells[cellIndex];
+
+                // Create multiple wave patterns
+                const wave1 = Math.sin((col + row) * Math.PI / 4) * 30;
+                const wave2 = Math.sin((col - row) * Math.PI / 3) * 25;
+                const wave3 = Math.cos(col * Math.PI / 2) * 20;
+
+                // Combine waves for complex motion
+                const waveOffset = wave1 + wave2 + wave3;
+
+                // Multiple rotation axes
+                const rotateX = Math.sin(col * Math.PI / 6) * 15 + Math.cos(row * Math.PI / 8) * 10;
+                const rotateY = Math.cos(row * Math.PI / 6) * 15 + Math.sin(col * Math.PI / 8) * 10;
+                const rotateZ = Math.sin((col + row) * Math.PI / 8) * 5;
+
+                // Apply multiple wave transformation
+                cell.style.transform = `
+                    translateZ(${waveOffset}px)
+                    rotateX(${rotateX}deg)
+                    rotateY(${rotateY}deg)
+                    rotateZ(${rotateZ}deg)
                 `;
                 cell.style.transformStyle = 'preserve-3d';
             }
