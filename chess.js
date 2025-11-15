@@ -118,49 +118,165 @@ class ChessGame {
         });
     }
 
-    // Render the chess board
+    // Initialize vertex grid for mesh distortion (9x9 vertices for 8x8 cells)
+    initializeVertexGrid() {
+        this.vertexGrid = [];
+        const cellSize = 100 / 8; // Percentage-based for responsiveness
+
+        for (let row = 0; row <= 8; row++) {
+            this.vertexGrid[row] = [];
+            for (let col = 0; col <= 8; col++) {
+                this.vertexGrid[row][col] = {
+                    x: col * cellSize,
+                    y: row * cellSize,
+                    originalX: col * cellSize,
+                    originalY: row * cellSize
+                };
+            }
+        }
+    }
+
+    // Render the chess board using SVG
     renderBoard() {
         this.boardElement.innerHTML = '';
 
+        // Initialize vertex grid if not exists
+        if (!this.vertexGrid) {
+            this.initializeVertexGrid();
+        }
+
+        // Create SVG element
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '100%');
+        svg.setAttribute('height', '100%');
+        svg.setAttribute('viewBox', '0 0 100 100');
+        svg.setAttribute('preserveAspectRatio', 'none');
+        svg.style.position = 'absolute';
+        svg.style.top = '0';
+        svg.style.left = '0';
+        svg.style.width = '100%';
+        svg.style.height = '100%';
+
+        // Create cells as SVG polygons
         for (let row = 0; row < 8; row++) {
             for (let col = 0; col < 8; col++) {
-                const cell = document.createElement('div');
-                cell.className = `cell ${(row + col) % 2 === 0 ? 'light' : 'dark'}`;
-                cell.dataset.row = row;
-                cell.dataset.col = col;
+                const cell = this.createSVGCell(row, col);
+                svg.appendChild(cell);
+            }
+        }
 
-                // Add piece if exists
+        this.boardElement.appendChild(svg);
+        this.svgElement = svg;
+
+        // Create piece container (HTML overlay)
+        const pieceContainer = document.createElement('div');
+        pieceContainer.className = 'piece-container';
+        pieceContainer.style.position = 'absolute';
+        pieceContainer.style.top = '0';
+        pieceContainer.style.left = '0';
+        pieceContainer.style.width = '100%';
+        pieceContainer.style.height = '100%';
+        pieceContainer.style.pointerEvents = 'none';
+
+        // Add pieces
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
                 const piece = this.board[row][col];
                 if (piece) {
                     const pieceElement = document.createElement('div');
                     pieceElement.className = 'piece';
                     pieceElement.style.backgroundImage = this.getPieceImage(piece);
-                    cell.appendChild(pieceElement);
+                    pieceElement.dataset.row = row;
+                    pieceElement.dataset.col = col;
+                    pieceContainer.appendChild(pieceElement);
                 }
-
-                // Highlight selected cell
-                if (this.selectedCell && this.selectedCell.row === row && this.selectedCell.col === col) {
-                    cell.classList.add('selected');
-                }
-
-                // Highlight valid moves
-                if (this.validMoves.some(move => move.row === row && move.col === col)) {
-                    const targetPiece = this.board[row][col];
-                    if (targetPiece && targetPiece.color !== this.currentPlayer) {
-                        cell.classList.add('capture-move');
-                    } else {
-                        cell.classList.add('valid-move');
-                    }
-                }
-
-                cell.addEventListener('click', () => this.handleCellClick(row, col));
-                this.boardElement.appendChild(cell);
             }
         }
+
+        this.boardElement.appendChild(pieceContainer);
+        this.pieceContainer = pieceContainer;
+
+        // Update piece positions based on current view
+        this.updatePiecePositions();
 
         // Reapply current view after rendering
         if (this.currentView && this.currentView !== 'normal') {
             this.changeView(this.currentView);
+        }
+    }
+
+    // Create SVG cell polygon
+    createSVGCell(row, col) {
+        const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+
+        // Get vertices for this cell
+        const topLeft = this.vertexGrid[row][col];
+        const topRight = this.vertexGrid[row][col + 1];
+        const bottomRight = this.vertexGrid[row + 1][col + 1];
+        const bottomLeft = this.vertexGrid[row + 1][col];
+
+        const points = `${topLeft.x},${topLeft.y} ${topRight.x},${topRight.y} ${bottomRight.x},${bottomRight.y} ${bottomLeft.x},${bottomLeft.y}`;
+        polygon.setAttribute('points', points);
+
+        // Set colors based on checkerboard pattern
+        const isLight = (row + col) % 2 === 0;
+        polygon.setAttribute('fill', isLight ? '#f0d9b5' : '#b58863');
+        polygon.setAttribute('stroke', 'none');
+
+        // Add classes for styling
+        polygon.setAttribute('class', `cell ${isLight ? 'light' : 'dark'}`);
+        polygon.dataset.row = row;
+        polygon.dataset.col = col;
+
+        // Highlight selected cell
+        if (this.selectedCell && this.selectedCell.row === row && this.selectedCell.col === col) {
+            polygon.setAttribute('fill', '#baca44');
+        }
+
+        // Highlight valid moves
+        if (this.validMoves.some(move => move.row === row && move.col === col)) {
+            const targetPiece = this.board[row][col];
+            if (targetPiece && targetPiece.color !== this.currentPlayer) {
+                polygon.setAttribute('fill', '#e74c3c');
+                polygon.setAttribute('stroke', '#c0392b');
+                polygon.setAttribute('stroke-width', '0.5');
+            } else {
+                polygon.setAttribute('fill', '#7fc97f');
+            }
+        }
+
+        // Add click handler
+        polygon.style.cursor = 'pointer';
+        polygon.addEventListener('click', () => this.handleCellClick(row, col));
+
+        return polygon;
+    }
+
+    // Update piece positions based on distorted mesh
+    updatePiecePositions() {
+        if (!this.pieceContainer) return;
+
+        const pieces = this.pieceContainer.children;
+        for (let piece of pieces) {
+            const row = parseInt(piece.dataset.row);
+            const col = parseInt(piece.dataset.col);
+
+            // Calculate center of the cell from its vertices
+            const topLeft = this.vertexGrid[row][col];
+            const topRight = this.vertexGrid[row][col + 1];
+            const bottomRight = this.vertexGrid[row + 1][col + 1];
+            const bottomLeft = this.vertexGrid[row + 1][col];
+
+            const centerX = (topLeft.x + topRight.x + bottomRight.x + bottomLeft.x) / 4;
+            const centerY = (topLeft.y + topRight.y + bottomRight.y + bottomLeft.y) / 4;
+
+            // Position piece at center
+            piece.style.position = 'absolute';
+            piece.style.left = `${centerX}%`;
+            piece.style.top = `${centerY}%`;
+            piece.style.transform = 'translate(-50%, -50%)';
+            piece.style.width = '10%';
+            piece.style.height = '10%';
         }
     }
 
@@ -677,154 +793,152 @@ class ChessGame {
         this.updateStatus(`View changed to: ${view}`);
     }
 
+    // Reset vertices to original positions
+    resetVertices() {
+        if (!this.vertexGrid) return;
+
+        for (let row = 0; row <= 8; row++) {
+            for (let col = 0; col <= 8; col++) {
+                this.vertexGrid[row][col].x = this.vertexGrid[row][col].originalX;
+                this.vertexGrid[row][col].y = this.vertexGrid[row][col].originalY;
+            }
+        }
+    }
+
+    // Update SVG polygons based on vertex positions
+    updateSVGCells() {
+        if (!this.svgElement) return;
+
+        const polygons = this.svgElement.querySelectorAll('polygon');
+        polygons.forEach(polygon => {
+            const row = parseInt(polygon.dataset.row);
+            const col = parseInt(polygon.dataset.col);
+
+            const topLeft = this.vertexGrid[row][col];
+            const topRight = this.vertexGrid[row][col + 1];
+            const bottomRight = this.vertexGrid[row + 1][col + 1];
+            const bottomLeft = this.vertexGrid[row + 1][col];
+
+            const points = `${topLeft.x},${topLeft.y} ${topRight.x},${topRight.y} ${bottomRight.x},${bottomRight.y} ${bottomLeft.x},${bottomLeft.y}`;
+            polygon.setAttribute('points', points);
+        });
+
+        this.updatePiecePositions();
+    }
+
     // Normal View - Reset all transformations
     applyNormalView() {
-        const cells = this.boardElement.children;
-        this.boardElement.style.transform = '';
-        this.boardElement.style.transformStyle = '';
-        this.boardElement.style.perspective = '';
-
-        for (let i = 0; i < cells.length; i++) {
-            cells[i].style.transform = '';
-        }
+        this.resetVertices();
+        this.updateSVGCells();
     }
 
     // Perspective 3D View - Apply 3D perspective transformation
     applyPerspectiveView() {
-        const cells = this.boardElement.children;
+        this.resetVertices();
 
-        // Apply perspective to the board container
-        this.boardElement.style.transformStyle = 'preserve-3d';
-        this.boardElement.style.perspective = '1000px';
-        this.boardElement.style.transform = 'rotateX(25deg) rotateZ(-5deg)';
+        // Apply perspective distortion to vertices
+        for (let row = 0; row <= 8; row++) {
+            for (let col = 0; col <= 8; col++) {
+                const vertex = this.vertexGrid[row][col];
 
-        // Add subtle depth to each cell based on position
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const cellIndex = row * 8 + col;
-                const cell = cells[cellIndex];
+                // Perspective scaling - rows further back are smaller
+                const perspectiveFactor = 1 - (row / 8) * 0.3;
+                const centerX = 50;
 
-                // Create depth effect - cells further back are slightly raised
-                const depth = (7 - row) * 2;
-                cell.style.transform = `translateZ(${depth}px)`;
-                cell.style.transformStyle = 'preserve-3d';
+                // Scale X towards center based on row
+                vertex.x = centerX + (vertex.originalX - centerX) * perspectiveFactor;
+
+                // Compress Y for perspective
+                vertex.y = vertex.originalY * (0.7 + row / 8 * 0.3);
             }
         }
+
+        this.updateSVGCells();
     }
 
-    // Wave Effect View - Apply wave-like distortion with stretching
+    // Wave Effect View - Apply wave-like distortion by manipulating vertices
     applyWaveView() {
-        const cells = this.boardElement.children;
+        this.resetVertices();
 
-        this.boardElement.style.transformStyle = 'preserve-3d';
-        this.boardElement.style.perspective = '1200px';
+        // Distort vertices to create wave effect
+        for (let row = 0; row <= 8; row++) {
+            for (let col = 0; col <= 8; col++) {
+                const vertex = this.vertexGrid[row][col];
 
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const cellIndex = row * 8 + col;
-                const cell = cells[cellIndex];
+                // Calculate wave displacement
+                const waveX = Math.sin((row + col) * Math.PI / 4) * 3;
+                const waveY = Math.cos((row - col) * Math.PI / 4) * 3;
 
-                // Calculate wave parameters for stretching
-                const waveHeight = Math.sin((col + row) * Math.PI / 4) * 20;
-                const scaleX = 1 + Math.sin(col * Math.PI / 8) * 0.15;
-                const scaleY = 1 + Math.cos(row * Math.PI / 8) * 0.15;
-                const skewX = Math.sin(row * Math.PI / 6) * 3;
-                const skewY = Math.cos(col * Math.PI / 6) * 3;
-
-                // Apply wave transformation with stretching and skewing
-                cell.style.transform = `
-                    translateZ(${waveHeight}px)
-                    scaleX(${scaleX})
-                    scaleY(${scaleY})
-                    skewX(${skewX}deg)
-                    skewY(${skewY}deg)
-                `;
-                cell.style.transformStyle = 'preserve-3d';
-                cell.style.transformOrigin = 'center center';
+                // Apply wave distortion
+                vertex.x = vertex.originalX + waveX;
+                vertex.y = vertex.originalY + waveY;
             }
         }
+
+        this.updateSVGCells();
     }
 
-    // Dramatic Wave Effect View - Apply extreme wave-like distortion with stretching
+    // Dramatic Wave Effect View - Apply extreme wave-like distortion
     applyDramaticWaveView() {
-        const cells = this.boardElement.children;
+        this.resetVertices();
 
-        this.boardElement.style.transformStyle = 'preserve-3d';
-        this.boardElement.style.perspective = '800px';
+        // Distort vertices to create dramatic wave effect
+        for (let row = 0; row <= 8; row++) {
+            for (let col = 0; col <= 8; col++) {
+                const vertex = this.vertexGrid[row][col];
 
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const cellIndex = row * 8 + col;
-                const cell = cells[cellIndex];
+                // Calculate dramatic wave displacement with higher amplitude
+                const waveX = Math.sin((row + col) * Math.PI / 3) * 8;
+                const waveY = Math.cos((row - col) * Math.PI / 3) * 8;
 
-                // Calculate dramatic wave parameters with much higher multipliers
-                const waveHeight = Math.sin((col + row) * Math.PI / 4) * 80;
-                const scaleX = 1 + Math.sin(col * Math.PI / 6) * 0.4;
-                const scaleY = 1 + Math.cos(row * Math.PI / 6) * 0.4;
-                const skewX = Math.sin(row * Math.PI / 5) * 8;
-                const skewY = Math.cos(col * Math.PI / 5) * 8;
-                const uniformScale = 1 + Math.sin((col + row) * Math.PI / 6) * 0.2;
+                // Additional circular wave component
+                const centerRow = 4.5;
+                const centerCol = 4.5;
+                const distFromCenter = Math.sqrt(Math.pow(row - centerRow, 2) + Math.pow(col - centerCol, 2));
+                const radialWave = Math.sin(distFromCenter * Math.PI / 2) * 4;
 
-                // Apply dramatic wave transformation with extreme stretching
-                cell.style.transform = `
-                    translateZ(${waveHeight}px)
-                    scale(${uniformScale})
-                    scaleX(${scaleX})
-                    scaleY(${scaleY})
-                    skewX(${skewX}deg)
-                    skewY(${skewY}deg)
-                `;
-                cell.style.transformStyle = 'preserve-3d';
-                cell.style.transformOrigin = 'center center';
+                // Apply dramatic wave distortion
+                vertex.x = vertex.originalX + waveX + radialWave * Math.cos(Math.atan2(row - centerRow, col - centerCol));
+                vertex.y = vertex.originalY + waveY + radialWave * Math.sin(Math.atan2(row - centerRow, col - centerCol));
             }
         }
+
+        this.updateSVGCells();
     }
 
-    // Multiple Waves Effect View - Apply multiple overlapping wave patterns with stretching
+    // Multiple Waves Effect View - Apply multiple overlapping wave patterns
     applyMultiWaveView() {
-        const cells = this.boardElement.children;
+        this.resetVertices();
 
-        this.boardElement.style.transformStyle = 'preserve-3d';
-        this.boardElement.style.perspective = '1000px';
+        // Distort vertices with multiple overlapping wave patterns
+        for (let row = 0; row <= 8; row++) {
+            for (let col = 0; col <= 8; col++) {
+                const vertex = this.vertexGrid[row][col];
 
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
-                const cellIndex = row * 8 + col;
-                const cell = cells[cellIndex];
+                // Multiple wave patterns
+                const wave1X = Math.sin((row + col) * Math.PI / 4) * 5;
+                const wave1Y = Math.cos((row + col) * Math.PI / 4) * 5;
 
-                // Create multiple wave patterns for height
-                const wave1 = Math.sin((col + row) * Math.PI / 4) * 35;
-                const wave2 = Math.sin((col - row) * Math.PI / 3) * 30;
-                const wave3 = Math.cos(col * Math.PI / 2) * 25;
+                const wave2X = Math.sin((row - col) * Math.PI / 3) * 4;
+                const wave2Y = Math.cos((row - col) * Math.PI / 3) * 4;
 
-                // Combine waves for complex depth
-                const waveHeight = wave1 + wave2 + wave3;
+                const wave3X = Math.sin(row * Math.PI / 2) * 3;
+                const wave3Y = Math.cos(col * Math.PI / 2) * 3;
 
-                // Multiple stretching patterns
-                const scaleX1 = 1 + Math.sin(col * Math.PI / 6) * 0.25;
-                const scaleX2 = 1 + Math.cos(row * Math.PI / 8) * 0.15;
-                const scaleY1 = 1 + Math.cos(row * Math.PI / 6) * 0.25;
-                const scaleY2 = 1 + Math.sin(col * Math.PI / 8) * 0.15;
+                // Circular ripple from center
+                const centerRow = 4.5;
+                const centerCol = 4.5;
+                const distFromCenter = Math.sqrt(Math.pow(row - centerRow, 2) + Math.pow(col - centerCol, 2));
+                const ripple = Math.sin(distFromCenter * Math.PI / 1.5) * 3;
+                const angle = Math.atan2(row - centerRow, col - centerCol);
 
-                const finalScaleX = scaleX1 * scaleX2;
-                const finalScaleY = scaleY1 * scaleY2;
-
-                // Complex skewing patterns
-                const skewX = Math.sin((col + row) * Math.PI / 7) * 6 + Math.cos(col * Math.PI / 5) * 4;
-                const skewY = Math.cos((col - row) * Math.PI / 7) * 6 + Math.sin(row * Math.PI / 5) * 4;
-
-                // Apply multiple wave transformation with complex stretching
-                cell.style.transform = `
-                    translateZ(${waveHeight}px)
-                    scaleX(${finalScaleX})
-                    scaleY(${finalScaleY})
-                    skewX(${skewX}deg)
-                    skewY(${skewY}deg)
-                `;
-                cell.style.transformStyle = 'preserve-3d';
-                cell.style.transformOrigin = 'center center';
+                // Combine all waves
+                vertex.x = vertex.originalX + wave1X + wave2X + wave3X + ripple * Math.cos(angle);
+                vertex.y = vertex.originalY + wave1Y + wave2Y + wave3Y + ripple * Math.sin(angle);
             }
         }
+
+        this.updateSVGCells();
     }
 }
 
