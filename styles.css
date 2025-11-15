@@ -189,18 +189,146 @@ button {
     font-weight: 500;
 }
 
-/* Responsive design */
-@media (max-width: 600px) {
+/* Responsive design - Mobile */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+        background-size: 20px 20px;
+    }
+
     .container {
         padding: 15px;
+        max-width: 100%;
     }
 
     h1 {
         font-size: 1.8em;
+        margin-bottom: 15px;
     }
 
     .game-info {
         flex-direction: column;
         gap: 10px;
+        padding: 10px;
+    }
+
+    .game-mode-selector,
+    .theme-selector {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+
+    .game-mode-selector label,
+    .theme-selector label {
+        font-size: 1em;
+        margin-right: 10px;
+    }
+
+    .game-mode-selector select,
+    .theme-selector select {
+        flex: 1;
+        max-width: 200px;
+    }
+
+    .turn-indicator {
+        font-size: 1.1em;
+        text-align: center;
+        width: 100%;
+    }
+
+    #chess-board {
+        max-width: 100%;
+        border-width: 2px;
+    }
+
+    .controls {
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 15px;
+    }
+
+    button {
+        width: 100%;
+        padding: 12px;
+        font-size: 0.95em;
+    }
+
+    .status {
+        margin-top: 15px;
+        padding: 12px;
+    }
+
+    #status-message {
+        font-size: 1em;
+    }
+}
+
+/* Responsive design - Tablet */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .container {
+        max-width: 700px;
+    }
+
+    h1 {
+        font-size: 2.2em;
+    }
+
+    .game-info {
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    #chess-board {
+        max-width: 600px;
+    }
+}
+
+/* Responsive design - Desktop */
+@media (min-width: 1025px) {
+    .container {
+        max-width: 800px;
+        padding: 40px;
+    }
+
+    h1 {
+        font-size: 3em;
+        margin-bottom: 25px;
+    }
+
+    .game-info {
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+
+    .game-mode-selector,
+    .theme-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    #chess-board {
+        max-width: 640px;
+    }
+
+    .controls {
+        margin-top: 25px;
+        gap: 15px;
+    }
+
+    button {
+        padding: 14px 28px;
+        font-size: 1.05em;
+    }
+
+    .status {
+        margin-top: 25px;
+        padding: 20px;
+    }
+
+    #status-message {
+        font-size: 1.15em;
     }
 }

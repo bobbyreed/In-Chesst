@@ -1,3 +1,46 @@
+// AI Strategy Base Class
+class AIStrategy {
+    constructor(game) {
+        this.game = game;
+    }
+
+    // Returns the best move for the given color
+    // Should return { from: { row, col }, to: { row, col } } or null
+    selectMove(color) {
+        throw new Error('selectMove must be implemented by subclass');
+    }
+}
+
+// Random AI Strategy - makes random legal moves
+class RandomAI extends AIStrategy {
+    selectMove(color) {
+        const allMoves = [];
+
+        // Collect all possible moves for this color
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const piece = this.game.board[row][col];
+                if (piece && piece.color === color) {
+                    const validMoves = this.game.getValidMoves(row, col);
+                    for (const move of validMoves) {
+                        allMoves.push({
+                            from: { row, col },
+                            to: { row: move.row, col: move.col }
+                        });
+                    }
+                }
+            }
+        }
+
+        // Return a random move
+        if (allMoves.length > 0) {
+            return allMoves[Math.floor(Math.random() * allMoves.length)];
+        }
+
+        return null;
+    }
+}
+
 // Chess Game Engine
 class ChessGame {
     constructor() {
@@ -8,6 +51,9 @@ class ChessGame {
         this.moveHistory = [];
         this.theme = 'chess';
         this.capturedPieces = { white: [], black: [] };
+        this.gameMode = 'human'; // 'human' or 'computer'
+        this.aiStrategy = new RandomAI(this); // Extensible - can swap for different strategies
+        this.computerColor = 'black'; // Computer always plays black
 
         this.initializeUI();
         this.attachEventListeners();
@@ -59,6 +105,7 @@ class ChessGame {
         document.getElementById('reset-btn').addEventListener('click', () => this.resetGame());
         document.getElementById('undo-btn').addEventListener('click', () => this.undoMove());
         document.getElementById('theme').addEventListener('change', (e) => this.changeTheme(e.target.value));
+        document.getElementById('game-mode').addEventListener('change', (e) => this.changeGameMode(e.target.value));
     }
 
     // Render the chess board
@@ -110,6 +157,11 @@ class ChessGame {
 
     // Handle cell click
     handleCellClick(row, col) {
+        // Prevent interaction when it's computer's turn
+        if (this.gameMode === 'computer' && this.currentPlayer === this.computerColor) {
+            return;
+        }
+
         const clickedPiece = this.board[row][col];
 
         // If a cell is already selected
@@ -346,6 +398,8 @@ class ChessGame {
         if (this.isInCheck(opponent)) {
             if (this.isCheckmate(opponent)) {
                 this.updateStatus(`Checkmate! ${this.currentPlayer} wins!`);
+                this.renderBoard();
+                return; // Game over, don't trigger computer move
             } else {
                 this.updateStatus(`${opponent} is in check!`);
             }
@@ -358,6 +412,12 @@ class ChessGame {
         this.turnElement.textContent = this.currentPlayer.charAt(0).toUpperCase() + this.currentPlayer.slice(1);
 
         this.renderBoard();
+
+        // Trigger computer move if it's computer's turn
+        if (this.gameMode === 'computer' && this.currentPlayer === this.computerColor) {
+            // Add a small delay for better UX
+            setTimeout(() => this.makeComputerMove(), 500);
+        }
     }
 
     // Check if a color is in check
@@ -487,6 +547,31 @@ class ChessGame {
     changeTheme(theme) {
         this.theme = theme;
         this.renderBoard();
+    }
+
+    // Change game mode
+    changeGameMode(mode) {
+        this.gameMode = mode;
+        this.resetGame();
+        if (mode === 'computer') {
+            this.updateStatus('Game started. You are White, Computer is Black.');
+        } else {
+            this.updateStatus('Game started. White moves first.');
+        }
+    }
+
+    // Make computer move
+    makeComputerMove() {
+        if (this.currentPlayer !== this.computerColor) {
+            return;
+        }
+
+        const move = this.aiStrategy.selectMove(this.computerColor);
+        if (move) {
+            this.makeMove(move.from.row, move.from.col, move.to.row, move.to.col);
+        } else {
+            this.updateStatus('Computer has no valid moves!');
+        }
     }
 
     // Update status message
